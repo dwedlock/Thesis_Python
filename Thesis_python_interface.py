@@ -44,6 +44,7 @@
 import sys
 import copy
 import rospy
+import random
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
@@ -150,36 +151,22 @@ class MoveGroupPythonIntefaceTutorial(object):
     self.group_names = group_names
 
 
-  def go_to_joint_state(self):
-    # Copy class variables to local variables to make the web tutorials more clear.
-    # In practice, you should use the class variables directly unless you have a good
-    # reason not to.
+  def go_to_joint_state(self,zero,one,two,three,four,five):
+
+    # NOTE Danger This joint state controller does no planning and will operate to collision
     move_group = self.move_group
-
-    ## BEGIN_SUB_TUTORIAL plan_to_joint_state
-    ##
-    ## Planning to a Joint Goal
-    ## ^^^^^^^^^^^^^^^^^^^^^^^^
-    ## The Panda's zero configuration is at a `singularity <https://www.quora.com/Robotics-What-is-meant-by-kinematic-singularity>`_ so the first
-    ## thing we want to do is move it to a slightly better configuration.
-    # We can get the joint values from the group and adjust some of the values:
     joint_goal = move_group.get_current_joint_values()
-    joint_goal[0] = 0.0#1.57 #radians so 1 rad = 57.3 or 90deg = 1.57rads
-    joint_goal[1] = -1.57#1.57#-pi/4 
-    joint_goal[2] = 0.0#1.57
-    joint_goal[3] = 0.0#1.57#-pi/2
-    joint_goal[4] = 0.0#1.57
-    joint_goal[5] = 0.0#1.57#pi/3
-    #joint_goal[6] = 0
-
+    joint_goal[0] = zero #radians so 1 rad = 57.3 or 90deg = 1.57rads
+    joint_goal[1] = one#1.57#-pi/4 
+    joint_goal[2] = two#1.57
+    joint_goal[3] = three#1.57#-pi/2
+    joint_goal[4] = four#1.57
+    joint_goal[5] = five#1.57#pi/3
     # The go command can be called with joint values, poses, or without any
     # parameters if you have already set the pose or joint target for the group
     move_group.go(joint_goal, wait=True)
-
     # Calling ``stop()`` ensures that there is no residual movement
     move_group.stop()
-
-    ## END_SUB_TUTORIAL
 
     # For testing:
     current_joints = move_group.get_current_joint_values()
@@ -188,12 +175,9 @@ class MoveGroupPythonIntefaceTutorial(object):
     return all_close(joint_goal, current_joints, 0.01)
 
 
-  def go_to_pose_goal(self):
+  def go_to_pose_goal(self,W,X,Y,Z):
     # Copy class variables to local variables to make the web tutorials more clear.
-    # In practice, you should use the class variables directly unless you have a good
-    # reason not to.
     move_group = self.move_group
-
     ## BEGIN_SUB_TUTORIAL plan_to_pose
     ##
     print "Planning to a Pose Goal 0 0 0 0"
@@ -202,13 +186,11 @@ class MoveGroupPythonIntefaceTutorial(object):
     ## end-effector:
     pose_goal = geometry_msgs.msg.Pose()
     # Note these are in Quarternians 
-    pose_goal.orientation.w = 1.0#1.0
-    pose_goal.position.x = 0.2#0.4
-    pose_goal.position.y = 0.2#0.1
-    pose_goal.position.z = 1.3#0.4 Confirmed as UP
-
+    pose_goal.orientation.w = W#1.0
+    pose_goal.position.x = X#0.4
+    pose_goal.position.y = Y#0.1
+    pose_goal.position.z = Z#0.4 Confirmed as UP
     move_group.set_pose_target(pose_goal)
-
     ## Now, we call the planner to compute the plan and execute it.
     plan = move_group.go(wait=True)
     # Calling `stop()` ensures that there is no residual movement
@@ -216,20 +198,21 @@ class MoveGroupPythonIntefaceTutorial(object):
     # It is always good to clear your targets after planning with poses.
     # Note: there is no equivalent function for clear_joint_value_targets()
     move_group.clear_pose_targets()
-
-    ## END_SUB_TUTORIAL
-
-    # For testing:
-    # Note that since this section of code will not be included in the tutorials
-    # we use the class variable rather than the copied state variable
     current_pose = self.move_group.get_current_pose().pose
     return all_close(pose_goal, current_pose, 0.01)
 
 
-  def plan_cartesian_path(self, scale=1):
+  def plan_cartesian_path(self,coords, scale=1):
     # Copy class variables to local variables to make the web tutorials more clear.
     # In practice, you should use the class variables directly unless you have a good
     # reason not to.
+    x1 = coords[0]
+    y1 = coords[1]
+    z1 = coords[2]
+    x2 = coords[3]
+    y2 = coords[4]
+    z2 = coords[5]
+    
     move_group = self.move_group
 
     ## BEGIN_SUB_TUTORIAL plan_cartesian_path
@@ -243,14 +226,15 @@ class MoveGroupPythonIntefaceTutorial(object):
     waypoints = []
 
     wpose = move_group.get_current_pose().pose
-    wpose.position.z -= scale * 0.1  # First move up (z)
-    wpose.position.y += scale * 0.2  # and sideways (y)
+    wpose.position.x -= scale * x1  # First move up (z)
+    wpose.position.z -= scale * z1  # First move up (z)
+    wpose.position.y += scale * y1  # and sideways (y)
     waypoints.append(copy.deepcopy(wpose))
 
-    wpose.position.x += scale * 0.1  # Second move forward/backwards in (x)
+    wpose.position.x += scale * x2  # Second move forward/backwards in (x)
     waypoints.append(copy.deepcopy(wpose))
 
-    wpose.position.y -= scale * 0.1  # Third move sideways (y)
+    wpose.position.y -= scale * y2  # Third move sideways (y)
     waypoints.append(copy.deepcopy(wpose))
 
     # We want the Cartesian path to be interpolated at a resolution of 1 cm
@@ -357,30 +341,32 @@ class MoveGroupPythonIntefaceTutorial(object):
     ## END_SUB_TUTORIAL
 
 
-#  def add_box(self, timeout=4):
+  def add_box(self, timeout=4):
     # Copy class variables to local variables to make the web tutorials more clear.
     # In practice, you should use the class variables directly unless you have a good
     # reason not to.
-#    box_name = self.box_name
-#    scene = self.scene
+    box_name = self.box_name
+    scene = self.scene
 
     ## BEGIN_SUB_TUTORIAL add_box
     ##
     ## Adding Objects to the Planning Scene
     ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     ## First, we will create a box in the planning scene at the location of the left finger:
-#    box_pose = geometry_msgs.msg.PoseStamped()
-#    box_pose.header.frame_id = "panda_leftfinger"
-#    box_pose.pose.orientation.w = 1.0
-#    box_pose.pose.position.z = 0.07 # slightly above the end effector
-#    box_name = "box"
-#    scene.add_box(box_name, box_pose, size=(0.1, 0.1, 0.1))
+    box_pose = geometry_msgs.msg.PoseStamped()
+    box_pose.header.frame_id = "world"
+    box_pose.pose.orientation.w = 1.0
+    box_pose.pose.position.x = 0.0 # slightly above the end effector
+    box_pose.pose.position.y = 0.0 # slightly above the end effector
+    box_pose.pose.position.z = -0.05 # slightly above the end effector
+    box_name = "box"
+    scene.add_box(box_name, box_pose, size=(10, 10, 0.01))
 
     ## END_SUB_TUTORIAL
     # Copy local variables back to class variables. In practice, you should use the class
     # variables directly unless you have a good reason not to.
-#    self.box_name=box_name
-#    return self.wait_for_state_update(box_is_known=True, timeout=timeout)
+    self.box_name=box_name
+    return self.wait_for_state_update(box_is_known=True, timeout=timeout)
 
 
 #  def attach_box(self, timeout=4):
@@ -455,27 +441,23 @@ class MoveGroupPythonIntefaceTutorial(object):
 
 def main():
   try:
-    print ""
-    print "----------------------------------------------------------"
-    print "Welcome to the MoveIt MoveGroup Python Interface Tutorial"
-    print "----------------------------------------------------------"
-    print "Davids Test of Trial UR10 Programs Press Ctrl-D to exit at any time"
-    print ""
-    print "============ Press `Enter` to begin the tutorial by setting up the moveit_commander ..."
-    raw_input()
+    print "Python has started"
     tutorial = MoveGroupPythonIntefaceTutorial()
+    print "adding a table for collisions"
+    tutorial.add_box()
+    print "Success adding table "
 
     print "============ Press `Enter` to execute a movement using a joint state goal ..."
-    raw_input()
-    tutorial.go_to_joint_state()
+    tutorial.go_to_joint_state(0.0,-1.0,0.0,0.0,0.0,0.0)
 
     print "============ Press `Enter` to execute a movement using a pose goal ..."
     raw_input()
-    tutorial.go_to_pose_goal()
+    tutorial.go_to_pose_goal(1.0,0.4,0.1,0.4)
 
     print "============ Press `Enter` to plan and display a Cartesian path ..."
     raw_input()
-    cartesian_plan, fraction = tutorial.plan_cartesian_path()
+    pathlist = [0.5,0.5,0.5,0.8,0.8,0.8]
+    cartesian_plan, fraction = tutorial.plan_cartesian_path(pathlist)
 
     print "============ Press `Enter` to display a saved trajectory (this will replay the Cartesian path)  ..."
     raw_input()
@@ -484,6 +466,17 @@ def main():
     print "============ Press `Enter` to execute a saved path ..."
     raw_input()
     tutorial.execute_plan(cartesian_plan)
+
+    #for i in range(10):
+    #  Zero = random.uniform(0.0,1.5)
+    #  One = random.uniform(0.0,1.5) # This should be negatives
+    #  Two = random.uniform(0.0,1.5)
+    #  Three = random.uniform(0.0,-1.5) # This should be negatives 
+    #  Four = random.uniform(0.0,1.5)
+    #  Five = random.uniform(0.0,1.5)
+    #  tutorial.go_to_joint_state(Zero,One,Two,Three,Four,Five)
+    #  print"Next Joint Goal attempt"
+    #  print i
 
     print "============ Python tutorial demo complete!"
   except rospy.ROSInterruptException:
