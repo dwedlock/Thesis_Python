@@ -55,7 +55,11 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 # the goal ('fitness') function to be maximized
 #THIS IS THE EVALUATION FUNCTION CALLS MADE FROM HERE TO PYTHON MOVEIT INTERFACE, RETURN Euclidean ERROR 
 def evalOneMax(individual):
-    return (sum(individual)),
+    #print individual
+    #print "individuals vals" 
+    #Something like [9, 1.6477799299327085, 1.9630836409254298, 1.309408122302932, 0.30338760434706497, 1.9753449959651421, 1.411187743367649, 1.609950026413625]
+
+    return (sum(individual)), # want to return a Eucidean
 
 #----------
 # Operator registration
@@ -74,14 +78,14 @@ toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 # generation: each individual of the current generation
 # is replaced by the 'fittest' (best) of three individuals
 # drawn randomly from the current generation.
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("select", tools.selTournament, tournsize=10)
 
 #----------
 
 def main():
     random.seed(64)
 
-    # create an initial population of 300 individuals (where
+    # create an initial population of 16 individuals (where
     # each individual is a list of integers)
     pop = toolbox.population(n=16)
 
@@ -97,11 +101,11 @@ def main():
     #print pop # long list of tuples
     #THE LINE BELOW CALLS THE EVAUALTE FUNCTION 
     fitnesses = list(map(toolbox.evaluate, pop)) 
-    print fitnesses
-    print "FITNESS ABOVE"
+    #print fitnesses
+    #print "FITNESS ABOVE"
     #self.wvalues = tuple(map(mul, values, self.weights))
 
-    for ind, fit in zip(pop, fitnesses):
+    for ind, fit in zip(pop, fitnesses): # Only Called Once 
         ind.fitness.values = fit
     
     print("  Evaluated %i individuals" % len(pop))
@@ -113,7 +117,7 @@ def main():
     g = 0
     
     # Begin the evolution
-    while max(fits) < 100 and g < 1000:
+    while max(fits) < 100 and g < 1000: # Do this while the largest fitness of largest individual in pop is less than 100 and tries is less than 1000
         # A new generation
         g = g + 1
         print("-- Generation %i --" % g)
@@ -170,6 +174,8 @@ def main():
     
     best_ind = tools.selBest(pop, 1)[0]
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
+
+    #https://deap.readthedocs.io/en/master/tutorials/basic/part3.html
 
 if __name__ == "__main__":
     main()
