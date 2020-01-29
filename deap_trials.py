@@ -23,7 +23,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0,)) 
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
@@ -33,20 +33,29 @@ toolbox = base.Toolbox()
 #                      which corresponds to integers sampled uniformly
 #                      from the range [0,1] (i.e. 0 or 1 with equal
 #                      probability)
-toolbox.register("attr_bool", random.randint, 0, 1)
+toolbox.register("attr_points", random.randint, 1, 10)
+toolbox.register("attr_xmin", random.uniform,0.01,2.0)
+toolbox.register("attr_xmax", random.uniform,0.01,2.0)
+toolbox.register("attr_ymin", random.uniform,0.01,2.0)
+toolbox.register("attr_ymax", random.uniform,0.01,2.0)
+toolbox.register("attr_zmin", random.uniform,0.01,2.0)
+toolbox.register("attr_zmax", random.uniform,0.01,2.0)
+toolbox.register("attr_vmax", random.uniform,0.01,2.0)
+
 
 # Structure initializers
 #                         define 'individual' to be an individual
 #                         consisting of 100 'attr_bool' elements ('genes')
-toolbox.register("individual", tools.initRepeat, creator.Individual, 
-    toolbox.attr_bool, 100)
+toolbox.register("individual", tools.initCycle, creator.Individual, 
+    (toolbox.attr_points,toolbox.attr_xmin,toolbox.attr_xmax,toolbox.attr_ymin,toolbox.attr_ymax,toolbox.attr_zmin,toolbox.attr_zmax,toolbox.attr_vmax), n=1)
 
 # define the population to be a list of individuals
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # the goal ('fitness') function to be maximized
+#THIS IS THE EVALUATION FUNCTION CALLS MADE FROM HERE TO PYTHON MOVEIT INTERFACE, RETURN Euclidean ERROR 
 def evalOneMax(individual):
-    return sum(individual),
+    return (sum(individual)),
 
 #----------
 # Operator registration
@@ -74,7 +83,7 @@ def main():
 
     # create an initial population of 300 individuals (where
     # each individual is a list of integers)
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=16)
 
     # CXPB  is the probability with which two individuals
     #       are crossed
@@ -85,7 +94,13 @@ def main():
     print("Start of evolution")
     
     # Evaluate the entire population
-    fitnesses = list(map(toolbox.evaluate, pop))
+    #print pop # long list of tuples
+    #THE LINE BELOW CALLS THE EVAUALTE FUNCTION 
+    fitnesses = list(map(toolbox.evaluate, pop)) 
+    print fitnesses
+    print "FITNESS ABOVE"
+    #self.wvalues = tuple(map(mul, values, self.weights))
+
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
     
